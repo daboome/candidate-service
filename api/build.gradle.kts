@@ -9,6 +9,10 @@ micronaut {
     }
 }
 
+tasks.named<JavaCompile>("compileJava") {
+    options.compilerArgs.add("-Amicronaut.openapi.views.spec=swagger-ui.enabled=true")
+}
+
 dependencies {
     implementation(platform("io.micronaut.platform:micronaut-platform:4.7.6"))
     implementation(project(":application"))
