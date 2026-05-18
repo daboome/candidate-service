@@ -54,8 +54,10 @@ OpenAPI spec is generated at build time under `application/build/classes/java/ma
 
 ## Docker Compose (app + DB)
 
+This project uses the **Micronaut Application** plugin. The [`Dockerfile`](Dockerfile) builds a distribution with `installDist` inside the image build.
+
 ```bash
-./gradlew :application:shadowJar
+# Builds the app image (runs installDist in Docker) and starts app + PostgreSQL
 docker compose up --build
 ```
 
