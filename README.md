@@ -21,7 +21,7 @@ domain/           Model, eligibility rules, ports
 infrastructure/   JPA adapters, Liquibase, async jobs
 ```
 
-See [docs/adr/](docs/adr/) for decision records.
+See [DECISIONS.md](DECISIONS.md) for architectural choices and [docs/adr/](docs/adr/) for focused ADRs.
 
 ## Prerequisites
 
