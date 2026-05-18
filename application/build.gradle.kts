@@ -16,4 +16,8 @@ application {
 
 dependencies {
     implementation(project(":domain"))
+    implementation(project(":infrastructure"))
+    runtimeOnly(project(":api"))
+
+    runtimeOnly("ch.qos.logback:logback-classic")
 }
