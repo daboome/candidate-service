@@ -19,5 +19,9 @@ dependencies {
     implementation(project(":infrastructure"))
     runtimeOnly(project(":api"))
 
+    annotationProcessor("io.micronaut:micronaut-inject-java")
+    implementation("io.micronaut:micronaut-inject")
+    implementation("jakarta.inject:jakarta.inject-api")
+
     runtimeOnly("ch.qos.logback:logback-classic")
 }
