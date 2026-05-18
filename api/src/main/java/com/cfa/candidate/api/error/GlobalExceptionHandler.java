@@ -14,11 +14,15 @@ import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 @Produces("application/problem+json")
 public class GlobalExceptionHandler
     implements ExceptionHandler<Throwable, HttpResponse<ProblemDetail>> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @Override
   public HttpResponse<ProblemDetail> handle(HttpRequest request, Throwable exception) {
@@ -63,6 +67,7 @@ public class GlobalExceptionHandler
       return problem(
           request, "http-error", http.getStatus().getReason(), http.getStatus(), http.getMessage());
     }
+    LOG.error("Unhandled exception for {} {}", request.getMethod(), request.getUri(), exception);
     return problem(
         request,
         "internal-error",

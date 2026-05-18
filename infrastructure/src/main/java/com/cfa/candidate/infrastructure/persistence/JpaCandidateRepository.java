@@ -58,11 +58,13 @@ public class JpaCandidateRepository implements CandidateRepository {
   }
 
   @Override
+  @Transactional
   public Optional<Candidate> findById(UUID id) {
     return entityRepository.findByIdAndDeletedAtIsNull(id).map(CandidateMapper::toDomain);
   }
 
   @Override
+  @Transactional
   public Optional<Candidate> findActiveByEmail(String email) {
     return entityRepository
         .findByEmailIgnoreCaseAndDeletedAtIsNull(email)
@@ -75,6 +77,7 @@ public class JpaCandidateRepository implements CandidateRepository {
   }
 
   @Override
+  @Transactional
   public PageResult<Candidate> search(
       EligibilityStatus status, ProgramLevel program, int page, int size) {
     CriteriaBuilder cb = entityManager.getCriteriaBuilder();

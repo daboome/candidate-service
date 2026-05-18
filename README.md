@@ -40,6 +40,8 @@ docker compose up -d postgres
 
 API base URL: `http://localhost:8080/api/v1/candidates`
 
+VS Code [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) requests: [`http/candidate-api.http`](http/candidate-api.http)
+
 OpenAPI spec is generated at build time under `application/build/classes/java/main/META-INF/swagger/`.
 
 ## Build & test

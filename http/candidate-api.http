@@ -1,0 +1,265 @@
+# Candidate Registration Service — VS Code REST Client
+# Extension: REST Client (humao.rest-client)
+#
+# Start stack:
+#   docker compose up -d postgres
+#   ./gradlew :application:run
+#
+# @see README.md
+
+@baseUrl = http://localhost:8080
+@contentType = application/json
+@actorId = reviewer@cfa.local
+@correlationId = {{$guid}}
+
+### ─── Health ───────────────────────────────────────────────────────────────
+
+# @name health
+GET {{baseUrl}}/health
+X-Correlation-Id: {{correlationId}}
+
+### ─── Seed data (Liquibase) ───────────────────────────────────────────────
+
+@seedAliceId = 11111111-1111-1111-1111-111111111101
+@seedBobId = 11111111-1111-1111-1111-111111111102
+@seedCarolId = 11111111-1111-1111-1111-111111111103
+
+### Get seeded candidate (Alice — Level I, PENDING)
+GET {{baseUrl}}/api/v1/candidates/{{seedAliceId}}
+Accept: application/json
+X-Correlation-Id: {{correlationId}}
+
+### Get seeded candidate (Bob — Level II, ELIGIBLE)
+GET {{baseUrl}}/api/v1/candidates/{{seedBobId}}
+Accept: application/json
+
+### ─── Register candidates ─────────────────────────────────────────────────
+
+# @name registerLevelI
+POST {{baseUrl}}/api/v1/candidates
+Content-Type: {{contentType}}
+Accept: application/json
+X-Correlation-Id: {{correlationId}}
+
+{
+  "email": "jane.doe-{{$timestamp}}@example.com",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "selectedProgram": "LEVEL_I",
+  "education": [
+    {
+      "degreeLevel": "BACHELORS",
+      "institution": "State University",
+      "graduationYear": 2019
+    }
+  ],
+  "experience": [],
+  "examPasses": []
+}
+
+###
+
+# @name registerLevelIExperience
+POST {{baseUrl}}/api/v1/candidates
+Content-Type: {{contentType}}
+Accept: application/json
+
+{
+  "email": "john.smith-{{$timestamp}}@example.com",
+  "firstName": "John",
+  "lastName": "Smith",
+  "selectedProgram": "LEVEL_I",
+  "education": [],
+  "experience": [
+    {
+      "employer": "Finance Corp",
+      "role": "Analyst",
+      "startDate": "2018-01-01",
+      "endDate": null
+    }
+  ],
+  "examPasses": []
+}
+
+###
+
+# @name registerLevelII
+POST {{baseUrl}}/api/v1/candidates
+Content-Type: {{contentType}}
+Accept: application/json
+
+{
+  "email": "level2.candidate-{{$timestamp}}@example.com",
+  "firstName": "Pat",
+  "lastName": "Lee",
+  "selectedProgram": "LEVEL_II",
+  "education": [],
+  "experience": [],
+  "examPasses": [
+    {
+      "level": "LEVEL_I",
+      "passedAt": "2022-06-15"
+    }
+  ]
+}
+
+###
+
+# @name registerLevelIII
+POST {{baseUrl}}/api/v1/candidates
+Content-Type: {{contentType}}
+Accept: application/json
+
+{
+  "email": "level3.candidate-{{$timestamp}}@example.com",
+  "firstName": "Sam",
+  "lastName": "Nguyen",
+  "selectedProgram": "LEVEL_III",
+  "education": [],
+  "experience": [],
+  "examPasses": [
+    {
+      "level": "LEVEL_I",
+      "passedAt": "2021-08-01"
+    },
+    {
+      "level": "LEVEL_II",
+      "passedAt": "2023-11-20"
+    }
+  ]
+}
+
+### ─── Use ID from last registration (run registerLevelI first) ───────────
+
+@candidateId = {{registerLevelI.response.body.id}}
+
+### Get candidate by ID
+# @name getCandidate
+GET {{baseUrl}}/api/v1/candidates/{{candidateId}}
+Accept: application/json
+X-Correlation-Id: {{correlationId}}
+
+### Trigger eligibility verification (202 ACCEPTED → status VERIFYING)
+# @name triggerEligibility
+PUT {{baseUrl}}/api/v1/candidates/{{candidateId}}/eligibility
+Content-Type: {{contentType}}
+Accept: application/json
+X-Actor-Id: {{actorId}}
+X-Correlation-Id: {{correlationId}}
+
+{
+  "verifiedBy": "eligibility-reviewer@cfa.local"
+}
+
+###
+
+# Trigger eligibility — verifiedBy from X-Actor-Id when body omitted
+PUT {{baseUrl}}/api/v1/candidates/{{seedAliceId}}/eligibility
+Accept: application/json
+X-Actor-Id: {{actorId}}
+
+
+### Poll candidate after async verification (run again after ~1s)
+GET {{baseUrl}}/api/v1/candidates/{{candidateId}}
+Accept: application/json
+
+### ─── Search & pagination ─────────────────────────────────────────────────
+
+### Search all active candidates (default page=0, size=20)
+# @name searchAll
+GET {{baseUrl}}/api/v1/candidates?page=0&size=20
+Accept: application/json
+
+### Search by eligibility status
+GET {{baseUrl}}/api/v1/candidates?status=PENDING&page=0&size=10
+Accept: application/json
+
+### Search by program
+GET {{baseUrl}}/api/v1/candidates?program=LEVEL_II&page=0&size=10
+Accept: application/json
+
+### Search by status and program
+GET {{baseUrl}}/api/v1/candidates?status=ELIGIBLE&program=LEVEL_II&page=0&size=5
+Accept: application/json
+
+### ─── Soft delete ───────────────────────────────────────────────────────────
+
+# @name deleteCandidate
+DELETE {{baseUrl}}/api/v1/candidates/{{candidateId}}
+X-Correlation-Id: {{correlationId}}
+
+### Get deleted candidate (expect 404)
+GET {{baseUrl}}/api/v1/candidates/{{candidateId}}
+Accept: application/json
+
+### ─── Error scenarios (RFC 7807 application/problem+json) ───────────────────
+
+### Validation error — invalid email (400)
+POST {{baseUrl}}/api/v1/candidates
+Content-Type: {{contentType}}
+Accept: application/problem+json
+
+{
+  "email": "not-an-email",
+  "firstName": "Bad",
+  "lastName": "Request",
+  "selectedProgram": "LEVEL_I",
+  "education": [],
+  "experience": [],
+  "examPasses": []
+}
+
+### Duplicate email (409) — run twice with same email
+@duplicateEmail = duplicate-test@example.com
+
+# @name registerDuplicate1
+POST {{baseUrl}}/api/v1/candidates
+Content-Type: {{contentType}}
+Accept: application/problem+json
+
+{
+  "email": "{{duplicateEmail}}",
+  "firstName": "First",
+  "lastName": "User",
+  "selectedProgram": "LEVEL_I",
+  "education": [
+    {
+      "degreeLevel": "BACHELORS",
+      "institution": "University",
+      "graduationYear": 2020
+    }
+  ],
+  "experience": [],
+  "examPasses": []
+}
+
+###
+
+POST {{baseUrl}}/api/v1/candidates
+Content-Type: {{contentType}}
+Accept: application/problem+json
+
+{
+  "email": "{{duplicateEmail}}",
+  "firstName": "Second",
+  "lastName": "User",
+  "selectedProgram": "LEVEL_I",
+  "education": [],
+  "experience": [],
+  "examPasses": []
+}
+
+### Not found (404)
+GET {{baseUrl}}/api/v1/candidates/00000000-0000-0000-0000-000000000099
+Accept: application/problem+json
+
+### Invalid state — trigger eligibility while VERIFYING (422)
+# Run triggerEligibility twice in quick succession on the same candidate:
+PUT {{baseUrl}}/api/v1/candidates/{{candidateId}}/eligibility
+Content-Type: {{contentType}}
+Accept: application/problem+json
+X-Actor-Id: {{actorId}}
+
+{
+  "verifiedBy": "reviewer@cfa.local"
+}
