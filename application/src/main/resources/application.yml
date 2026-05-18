@@ -3,8 +3,38 @@ micronaut:
     name: candidate-service
   server:
     port: 8080
+  serde:
+    serialization:
+      inclusion: ALWAYS
+  executors:
+    io:
+      type: fixed
+      n-threads: 75
+      virtual: true
 
 endpoints:
   health:
     enabled: true
     sensitive: false
+
+datasources:
+  default:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:candidates}
+    driverClassName: org.postgresql.Driver
+    username: ${DB_USER:candidate}
+    password: ${DB_PASSWORD:candidate}
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: none
+    entity-scan:
+      packages:
+        - com.cfa.candidate.infrastructure.persistence.entity
+
+liquibase:
+  datasources:
+    default:
+      change-log: classpath:db/changelog/db.changelog-master.yaml
