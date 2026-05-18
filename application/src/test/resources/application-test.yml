@@ -1,0 +1,19 @@
+micronaut:
+  server:
+    port: -1
+
+datasources:
+  default:
+    driverClassName: org.postgresql.Driver
+
+liquibase:
+  datasources:
+    default:
+      change-log: classpath:db/changelog/db.changelog-master.yaml
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: none

@@ -10,6 +10,7 @@ micronaut {
 }
 
 dependencies {
+    implementation(platform("io.micronaut.platform:micronaut-platform:4.7.6"))
     implementation(project(":domain"))
 
     annotationProcessor("io.micronaut.data:micronaut-data-processor")

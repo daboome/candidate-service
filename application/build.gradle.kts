@@ -31,4 +31,12 @@ dependencies {
     implementation("jakarta.inject:jakarta.inject-api")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly(libs.logstash.logback.encoder)
+
+    testImplementation(libs.testcontainers.postgres)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation("org.testcontainers:testcontainers:${libs.versions.testcontainers.get()}")
+    testImplementation("io.micronaut.test:micronaut-test-junit5")
+    testImplementation("io.micronaut:micronaut-http-client")
+    testRuntimeOnly(project(":api"))
 }

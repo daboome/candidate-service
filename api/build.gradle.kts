@@ -19,6 +19,7 @@ dependencies {
     annotationProcessor("io.micronaut.openapi:micronaut-openapi")
 
     implementation("io.micronaut:micronaut-http-server")
+    implementation("io.projectreactor:reactor-core")
     implementation("io.micronaut:micronaut-jackson-databind")
     implementation("io.micronaut.serde:micronaut-serde-jackson")
     implementation("io.micronaut.validation:micronaut-validation")
