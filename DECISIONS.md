@@ -10,8 +10,7 @@ This document summarizes the main design choices for the **Candidate Registratio
 
 ```text
 api  ──►  application  ──►  domain  ◄──  infrastructure
-              │                              │
-              └──────── runtimeOnly(api) ────┘
+
 ```
 
 | Module | Responsibility |

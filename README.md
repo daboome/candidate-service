@@ -16,7 +16,7 @@ Hexagonal layout with dependency direction **api → application → domain ← 
 
 ```text
 api/              REST controllers, DTOs, RFC 7807 errors
-application/      Use cases, Micronaut bootstrap
+application/      Use cases, Micronaut bootstrap (composition root)
 domain/           Model, eligibility rules, ports
 infrastructure/   JPA adapters, Liquibase, async jobs
 ```

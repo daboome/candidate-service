@@ -6,7 +6,7 @@ import java.util.Map;
 
 public final class ProblemDetailFactory {
 
-  private static final URI BASE_TYPE = URI.create("https://localhost:8080/problems/");
+  private static final URI BASE_TYPE = URI.create("http://localhost:8080/problems/");
 
   private ProblemDetailFactory() {}
 

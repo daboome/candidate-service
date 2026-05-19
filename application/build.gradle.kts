@@ -17,7 +17,7 @@ application {
 dependencies {
     implementation(platform("io.micronaut.platform:micronaut-platform:4.7.6"))
     implementation(project(":domain"))
-    implementation(project(":infrastructure"))
+    runtimeOnly(project(":infrastructure"))
     runtimeOnly(project(":api"))
 
     annotationProcessor("io.micronaut:micronaut-inject-java")

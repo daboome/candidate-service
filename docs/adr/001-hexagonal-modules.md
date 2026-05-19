@@ -11,7 +11,7 @@ The assessment requires Clean/Hexagonal architecture with Gradle modules `api`, 
 ## Decision
 
 - **domain**: pure Java, no framework dependencies
-- **application**: use cases and Micronaut entrypoint
+- **application**: use cases and Micronaut entrypoint (composition root)
 - **infrastructure**: JPA, Liquibase, async eligibility worker
 - **api**: HTTP adapters; loaded at runtime by `application` to avoid circular Gradle dependencies
 
