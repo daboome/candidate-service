@@ -27,15 +27,15 @@ public class GlobalExceptionHandler
   @Override
   public HttpResponse<ProblemDetail> handle(HttpRequest request, Throwable exception) {
     if (exception instanceof DuplicateEmailException dup) {
-      return problem(
+      return ProblemResponseFactory.create(
           request, "duplicate-email", "Duplicate email", HttpStatus.CONFLICT, dup.getMessage());
     }
     if (exception instanceof CandidateNotFoundException notFound) {
-      return problem(
+      return ProblemResponseFactory.create(
           request, "not-found", "Candidate not found", HttpStatus.NOT_FOUND, notFound.getMessage());
     }
     if (exception instanceof InvalidCandidateStateException invalid) {
-      return problem(
+      return ProblemResponseFactory.create(
           request,
           "invalid-state",
           "Invalid candidate state",
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler
           violation.getConstraintViolations().stream()
               .map(v -> v.getPropertyPath() + ": " + v.getMessage())
               .collect(Collectors.joining("; "));
-      return problem(
+      return ProblemResponseFactory.create(
           request,
           "validation-error",
           "Validation failed",
@@ -56,7 +56,7 @@ public class GlobalExceptionHandler
           Map.of("violations", detail));
     }
     if (exception instanceof DomainException domain) {
-      return problem(
+      return ProblemResponseFactory.create(
           request,
           "domain-error",
           "Business rule violation",
@@ -64,31 +64,15 @@ public class GlobalExceptionHandler
           domain.getMessage());
     }
     if (exception instanceof HttpStatusException http) {
-      return problem(
+      return ProblemResponseFactory.create(
           request, "http-error", http.getStatus().getReason(), http.getStatus(), http.getMessage());
     }
     LOG.error("Unhandled exception for {} {}", request.getMethod(), request.getUri(), exception);
-    return problem(
+    return ProblemResponseFactory.create(
         request,
         "internal-error",
         "Internal server error",
         HttpStatus.INTERNAL_SERVER_ERROR,
         "An unexpected error occurred");
-  }
-
-  private static HttpResponse<ProblemDetail> problem(
-      HttpRequest<?> request, String type, String title, HttpStatus status, String detail) {
-    return problem(request, type, title, status, detail, Map.of());
-  }
-
-  private static HttpResponse<ProblemDetail> problem(
-      HttpRequest<?> request,
-      String type,
-      String title,
-      HttpStatus status,
-      String detail,
-      Map<String, Object> extensions) {
-    return HttpResponse.status(status)
-        .body(ProblemDetailFactory.of(request, type, title, status.getCode(), detail, extensions));
   }
 }
