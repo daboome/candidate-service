@@ -9,17 +9,11 @@ import com.cfa.candidate.domain.model.ProgramLevel;
 import com.cfa.candidate.domain.port.CandidateRepository;
 import com.cfa.candidate.infrastructure.persistence.entity.CandidateEntity;
 import com.cfa.candidate.infrastructure.persistence.mapper.CandidateMapper;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,12 +21,9 @@ import java.util.UUID;
 public class JpaCandidateRepository implements CandidateRepository {
 
   private final CandidateEntityRepository entityRepository;
-  private final EntityManager entityManager;
 
-  public JpaCandidateRepository(
-      CandidateEntityRepository entityRepository, EntityManager entityManager) {
+  public JpaCandidateRepository(CandidateEntityRepository entityRepository) {
     this.entityRepository = entityRepository;
-    this.entityManager = entityManager;
   }
 
   @Override
@@ -80,26 +71,16 @@ public class JpaCandidateRepository implements CandidateRepository {
   @Transactional
   public PageResult<Candidate> search(
       EligibilityStatus status, ProgramLevel program, int page, int size) {
-    CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-
-    CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-    Root<CandidateEntity> countRoot = countQuery.from(CandidateEntity.class);
-    countQuery.select(cb.count(countRoot)).where(predicates(cb, countRoot, status, program));
-    long total = entityManager.createQuery(countQuery).getSingleResult();
-
-    CriteriaQuery<CandidateEntity> dataQuery = cb.createQuery(CandidateEntity.class);
-    Root<CandidateEntity> root = dataQuery.from(CandidateEntity.class);
-    dataQuery
-        .select(root)
-        .where(predicates(cb, root, status, program))
-        .orderBy(cb.desc(root.get("createdAt")));
-
-    TypedQuery<CandidateEntity> typedQuery = entityManager.createQuery(dataQuery);
-    typedQuery.setFirstResult(page * size);
-    typedQuery.setMaxResults(size);
-    List<Candidate> content =
-        typedQuery.getResultList().stream().map(CandidateMapper::toDomain).toList();
-    return new PageResult<>(content, page, size, total);
+    Page<CandidateEntity> result =
+        entityRepository.searchActive(
+            status != null ? status.name() : null,
+            program != null ? program.name() : null,
+            Pageable.from(page, size));
+    return new PageResult<>(
+        result.getContent().stream().map(CandidateMapper::toDomain).toList(),
+        page,
+        size,
+        result.getTotalSize());
   }
 
   @Override
@@ -112,22 +93,6 @@ public class JpaCandidateRepository implements CandidateRepository {
     entity.setDeletedAt(Instant.now());
     entity.setUpdatedAt(Instant.now());
     entityRepository.update(entity);
-  }
-
-  private static Predicate[] predicates(
-      CriteriaBuilder cb,
-      Root<CandidateEntity> root,
-      EligibilityStatus status,
-      ProgramLevel program) {
-    List<Predicate> predicates = new ArrayList<>();
-    predicates.add(cb.isNull(root.get("deletedAt")));
-    if (status != null) {
-      predicates.add(cb.equal(root.get("eligibilityStatus"), status.name()));
-    }
-    if (program != null) {
-      predicates.add(cb.equal(root.get("selectedProgram"), program.name()));
-    }
-    return predicates.toArray(Predicate[]::new);
   }
 
   private static boolean isUniqueViolation(Throwable ex) {
